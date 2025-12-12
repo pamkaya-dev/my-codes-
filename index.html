@@ -123,8 +123,8 @@
   <footer>Made with ❤️ for Sri Lanka | Personal use only</footer>
 
   <script>
-    const API = "https://api.savw.xyz/v3"; // 2025 වන විට වැඩ කරන හොඳ API එකක්
-    
+    const API = "https://api.savw.xyz/v3";
+
     function loadVideo() {
       const url = document.getElementById("url").value.trim();
       if (!url) return alert("ලින්ක් එක දාන්නකෝ!");
@@ -133,7 +133,7 @@
       document.getElementById("error").textContent = "";
       document.getElementById("videoInfo").style.display = "none";
       
-      // yt සිංහලෙන් ලස්සන කරන්න
+      // Validate YouTube URL
       const videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
       if (!videoId) {
         document.getElementById("loading").style.display = "none";
@@ -141,7 +141,8 @@
         return;
       }
       
-      fetch(`\( {API}/info?url= \){url}`)
+      // FIXED API CALL
+      fetch(`${API}/info?url=${url}`)
         .then(res => res.json())
         .then(data => {
           document.getElementById("loading").style.display = "none";
@@ -151,12 +152,13 @@
           const info = data.data;
           document.getElementById("thumbnail").src = info.thumbnail;
           document.getElementById("title").textContent = info.title;
-          document.getElementById("length").textContent = `⏱ \( {Math.floor(info.duration / 60)}: \){(info.duration % 60).toString().padStart(2,'0')}`;
+          document.getElementById("length").innerHTML =
+            `⏱ ${Math.floor(info.duration / 60)}:${(info.duration % 60).toString().padStart(2,'0')}`;
           
           // Highest quality video
           const bestVideo = info.formats
             .filter(f => f.hasVideo && f.hasAudio)
-            .sort((a,b) => b.height - a.height)[0];
+            .sort((a, b) => b.height - a.height)[0];
           
           document.getElementById("videoLink").href = bestVideo.url;
           
@@ -169,15 +171,16 @@
         })
         .catch(err => {
           document.getElementById("loading").style.display = "none";
-          document.getElementById("error").textContent = "වීඩියෝ එක ලෝඩ් කරන්න බැහැ 😢 (Age restricted හෝ private නම් බැරි වෙයි)";
+          document.getElementById("error").textContent =
+            "වීඩියෝ එක ලෝඩ් කරන්න බැහැ 😢 (Age restricted හෝ private නම් බැරි වෙයි)";
           console.error(err);
         });
     }
     
-    // Enter key එකෙන්ත් ලෝඩ් කරන්න
+    // Enter press
     document.getElementById("url").addEventListener("keypress", e => {
       if (e.key === "Enter") loadVideo();
     });
   </script>
 </body>
-  </html>
+</html>
