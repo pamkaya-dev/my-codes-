@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YT Downloader - ලංකාවේ හොඳම</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    h1 { text-align: center; margin-bottom: 10px; font-size: 2.5rem; }
+    p { text-align: center; opacity: 0.9; margin-bottom: 30px; }
+    
+    .input-group {
+      display: flex;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    input {
+      flex: 1;
+      padding: 18px;
+      border: none;
+      border-radius: 50px 0 0 50px;
+      font-size: 16px;
+      outline: none;
+    }
+    button {
+      padding: 0 30px;
+      background: #ff0000;
+      color: white;
+      border: none;
+      border-radius: 0 50px 50px 0;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+    button:hover { background: #cc0000; }
+    
+    .video-info {
+      margin-top: 30px;
+      text-align: center;
+      display: none;
+    }
+    .thumbnail {
+      width: 100%;
+      max-width: 500px;
+      border-radius: 15px;
+      margin: 20px auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    .title {
+      font-size: 1.8rem;
+      margin: 15px 0;
+    }
+    .buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 25px;
+    }
+    .dl-btn {
+      padding: 15px 30px;
+      background: #ff0000;
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      transition: 0.3s;
+      display: inline-block;
+    }
+    .dl-btn:hover { background: #cc0000; transform: translateY(-3px); }
+    .dl-btn.mp3 { background: #28a745; }
+    .dl-btn.mp3:hover { background: #218838; }
+    
+    .loading { text-align: center; margin: 30px 0; font-size: 1.2rem; }
+    .error { color: #ff6b6b; text-align: center; margin: 20px 0; }
+    
+    footer { text-align: center; margin-top: 50px; opacity: 0.7; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>YT Downloader</h1>
+    <p>YouTube වීඩියෝ එකේ ලින්ක් එක දාලා ඩවුන්ලෝඩ් කරගන්න</p>
+    
+    <div class="input-group">
+      <input type="text" id="url" placeholder="https://www.youtube.com/watch?v=..." />
+      <button onclick="loadVideo()">Load</button>
+    </div>
+    
+    <div id="loading" class="loading" style="display:none;">Loading... රැහැන් ටිකක් ඉන්නකෝ 😊</div>
+    <div id="error" class="error"></div>
+    
+    <div id="videoInfo" class="video-info">
+      <img id="thumbnail" class="thumbnail" src="" alt="Thumbnail" />
+      <div class="title" id="title"></div>
+      <div id="length"></div>
+      
+      <div class="buttons">
+        <a id="videoLink" class="dl-btn" download>📥 Download Video (Highest Quality)</a>
+        <a id="audioLink" class="dl-btn mp3" download>🎵 Download MP3</a>
+      </div>
+    </div>
+  </div>
+  
+  <footer>Made with ❤️ for Sri Lanka | Personal use only</footer>
+
+  <script>
+    const API = "https://api.savw.xyz/v3"; // 2025 වන විට වැඩ කරන හොඳ API එකක්
+    
+    function loadVideo() {
+      const url = document.getElementById("url").value.trim();
+      if (!url) return alert("ලින්ක් එක දාන්නකෝ!");
+      
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("error").textContent = "";
+      document.getElementById("videoInfo").style.display = "none";
+      
+      // yt සිංහලෙන් ලස්සන කරන්න
+      const videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+      if (!videoId) {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("error").textContent = "වැරදි YouTube ලින්ක් එකක්!";
+        return;
+      }
+      
+      fetch(`\( {API}/info?url= \){url}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("loading").style.display = "none";
+          
+          if (data.status !== "success") throw new Error(data.message || "Error");
+          
+          const info = data.data;
+          document.getElementById("thumbnail").src = info.thumbnail;
+          document.getElementById("title").textContent = info.title;
+          document.getElementById("length").textContent = `⏱ \( {Math.floor(info.duration / 60)}: \){(info.duration % 60).toString().padStart(2,'0')}`;
+          
+          // Highest quality video
+          const bestVideo = info.formats
+            .filter(f => f.hasVideo && f.hasAudio)
+            .sort((a,b) => b.height - a.height)[0];
+          
+          document.getElementById("videoLink").href = bestVideo.url;
+          
+          // Audio only
+          const audio = info.formats.find(f => f.hasAudio && !f.hasVideo) || info.formats[0];
+          document.getElementById("audioLink").href = audio.url;
+          document.getElementById("audioLink").download = info.title + ".mp3";
+          
+          document.getElementById("videoInfo").style.display = "block";
+        })
+        .catch(err => {
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("error").textContent = "වීඩියෝ එක ලෝඩ් කරන්න බැහැ 😢 (Age restricted හෝ private නම් බැරි වෙයි)";
+          console.error(err);
+        });
+    }
+    
+    // Enter key එකෙන්ත් ලෝඩ් කරන්න
+    document.getElementById("url").addEventListener("keypress", e => {
+      if (e.key === "Enter") loadVideo();
+    });
+  </script>
+</body>
+  </html>
